@@ -1,5 +1,6 @@
 #include "mqtt/async_client.h"
 #include "fmt/format.h"
+#include "flatbuffers/flexbuffers.h"
 
 class MQTT_Subscriber : public virtual mqtt::callback,
 	public virtual mqtt::iaction_listener
@@ -32,7 +33,11 @@ private:
 	}
 
 	void message_arrived(mqtt::const_message_ptr msg) override {
-		fmt::print("Topic: {} - Payload: {}\n", msg->get_topic(), msg->to_string());
+		auto payload = msg->get_payload();
+		auto data = flexbuffers::GetRoot(reinterpret_cast<const uint8_t*>(payload.data()), payload.size()).AsMap();
+
+		fmt::print("Latitude: {}\n", data["latitude"].AsFloat());
+		fmt::print("Latitude: {}\n", data["longitude"].AsFloat());
 	}
 
 	void delivery_complete(mqtt::delivery_token_ptr token) override {}
@@ -66,7 +71,7 @@ public:
 
 int main(void)
 {
-	MQTT_Subscriber sub("tcp://192.168.72.249:1883", "MQTT", 0);
+	MQTT_Subscriber sub("tcp://192.168.72.249:1883", "XP-S76-Release", 0);
 
 	std::getchar();
 
